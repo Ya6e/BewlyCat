@@ -621,12 +621,6 @@ provide('getVideoType', () => props.type!)
             }"
             flex="~"
           >
-            <!-- Author Avatar -->
-            <VideoCardAuthorAvatar
-              v-if="!horizontal && video.author"
-              :author="video.author"
-              :is-live="video.liveStatus === 1"
-            />
             <div class="group/desc" flex="~ col" w="full" align="items-start">
               <div flex="~ gap-1 justify-between items-start" w="full" pos="relative">
                 <h3
@@ -654,49 +648,58 @@ provide('getVideoType', () => props.type!)
                   <div i-mingcute:more-2-line text="lg" />
                 </div>
               </div>
-              <div
-                text="$bew-text-2"
-                w-fit
-                m="t-2"
-                flex="~ items-center wrap"
-                :class="authorFontSizeClass"
-              >
-                <!-- Author Avatar -->
-                <span
-                  :style="{
-                    marginBottom: horizontal ? '0.5rem' : '0',
-                  }"
-                  flex="inline items-center"
-                >
-                  <VideoCardAuthorAvatar
-                    v-if="horizontal && video.author"
-                    :author="video.author"
-                    :is-live="video.liveStatus === 1"
-                  />
-                  <VideoCardAuthorName
-                    :author="video.author"
-                  />
-                </span>
-              </div>
 
-              <div flex="~ items-center gap-1 wrap">
-                <!-- View & Danmaku Count -->
-                <div
-                  text="$bew-text-2"
-                  rounded="$bew-radius"
-                  inline-block
-                  :class="metaFontSizeClass"
-                >
-                  <span v-if="video.view || video.viewStr">
-                    {{ video.view ? $t('common.view', { count: numFormatter(video.view) }, video.view) : `${numFormatter(video.viewStr || '0')}${$t('common.viewWithoutNum')}` }}
-                  </span>
-                  <template v-if="video.danmaku || video.danmakuStr">
-                    <span text-xs font-light mx-4px>•</span>
-                    <span>{{ video.danmaku ? $t('common.danmaku', { count: numFormatter(video.danmaku) }, video.danmaku) : `${numFormatter(video.danmakuStr || '0')}${$t('common.danmakuWithoutNum')}` }}</span>
-                  </template>
-                  <br>
+              <div m="t-2" flex="~ gap-2 items-center" w-full>
+                <VideoCardAuthorAvatar
+                  v-if="!horizontal && video.author"
+                  :author="video.author"
+                  :is-live="video.liveStatus === 1"
+                />
+                <div flex="~ col" w-full>
+                  <div
+                    text="$bew-text-2"
+                    w-fit
+                    flex="~ items-center wrap"
+                    :class="authorFontSizeClass"
+                  >
+                    <span
+                      :style="{
+                        marginBottom: horizontal ? '0.5rem' : '0',
+                      }"
+                      flex="inline items-center"
+                    >
+                      <VideoCardAuthorAvatar
+                        v-if="horizontal && video.author"
+                        :author="video.author"
+                        :is-live="video.liveStatus === 1"
+                      />
+                      <VideoCardAuthorName
+                        :author="video.author"
+                      />
+                    </span>
+                  </div>
+
+                  <div flex="~ items-center gap-1 wrap">
+                    <!-- View & Danmaku Count -->
+                    <div
+                      text="$bew-text-2"
+                      rounded="$bew-radius"
+                      inline-block
+                      :class="metaFontSizeClass"
+                    >
+                      <span v-if="video.view || video.viewStr">
+                        {{ video.view ? $t('common.view', { count: numFormatter(video.view) }, video.view) : `${numFormatter(video.viewStr || '0')}${$t('common.viewWithoutNum')}` }}
+                      </span>
+                      <template v-if="video.danmaku || video.danmakuStr">
+                        <span text-xs font-light mx-4px>•</span>
+                        <span>{{ video.danmaku ? $t('common.danmaku', { count: numFormatter(video.danmaku) }, video.danmaku) : `${numFormatter(video.danmakuStr || '0')}${$t('common.danmakuWithoutNum')}` }}</span>
+                      </template>
+                      <br>
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <div
                 mt-2
                 flex="~ gap-1 wrap"
