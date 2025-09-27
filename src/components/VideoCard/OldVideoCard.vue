@@ -166,7 +166,7 @@ const highlightTags = computed(() => {
   if (durationTag)
     tags.push(durationTag)
 
-  // 百万播放标签 - 只有在外部tag没有播放字眼时显示，且优先级最后
+  // 百万播放标签 - 只有在外部tag没有播放字眼时显示，且优先级最後
   if (viewCount >= 1_000_000) {
     const hasPlayKeyword = props.video.tag && /播放|观看|views?|play/i.test(props.video.tag)
     if (!hasPlayKeyword) {
@@ -621,12 +621,6 @@ provide('getVideoType', () => props.type!)
             }"
             flex="~"
           >
-            <!-- Author Avatar -->
-            <VideoCardAuthorAvatar
-              v-if="!horizontal && video.author"
-              :author="video.author"
-              :is-live="video.liveStatus === 1"
-            />
             <div class="group/desc" flex="~ col" w="full" align="items-start">
               <div flex="~ gap-1 justify-between items-start" w="full" pos="relative">
                 <h3
@@ -654,84 +648,93 @@ provide('getVideoType', () => props.type!)
                   <div i-mingcute:more-2-line text="lg" />
                 </div>
               </div>
-              <div
-                text="$bew-text-2"
-                w-fit
-                m="t-2"
-                flex="~ items-center wrap"
-                :class="authorFontSizeClass"
-              >
-                <!-- Author Avatar -->
-                <span
-                  :style="{
-                    marginBottom: horizontal ? '0.5rem' : '0',
-                  }"
-                  flex="inline items-center"
-                >
-                  <VideoCardAuthorAvatar
-                    v-if="horizontal && video.author"
-                    :author="video.author"
-                    :is-live="video.liveStatus === 1"
-                  />
-                  <VideoCardAuthorName
-                    :author="video.author"
-                  />
-                </span>
-              </div>
 
-              <div flex="~ items-center gap-1 wrap">
-                <!-- View & Danmaku Count -->
-                <div
-                  text="$bew-text-2"
-                  rounded="$bew-radius"
-                  inline-block
-                  :class="metaFontSizeClass"
-                >
-                  <span v-if="video.view || video.viewStr">
-                    {{ video.view ? $t('common.view', { count: numFormatter(video.view) }, video.view) : `${numFormatter(video.viewStr || '0')}${$t('common.viewWithoutNum')}` }}
-                  </span>
-                  <template v-if="video.danmaku || video.danmakuStr">
-                    <span text-xs font-light mx-4px>•</span>
-                    <span>{{ video.danmaku ? $t('common.danmaku', { count: numFormatter(video.danmaku) }, video.danmaku) : `${numFormatter(video.danmakuStr || '0')}${$t('common.danmakuWithoutNum')}` }}</span>
-                  </template>
-                  <br>
+              <div m="t-2" flex="~ gap-2 items-start" w-full>
+                <VideoCardAuthorAvatar
+                  v-if="!horizontal && video.author"
+                  :author="video.author"
+                  :is-live="video.liveStatus === 1"
+                  shrink-0
+                />
+                <div flex="~ col" w-full>
+                  <div
+                    text="$bew-text-2"
+                    w-fit
+                    flex="~ items-center wrap"
+                    :class="authorFontSizeClass"
+                  >
+                    <span
+                      :style="{
+                        marginBottom: horizontal ? '0.5rem' : '0',
+                      }"
+                      flex="inline items-center"
+                    >
+                      <VideoCardAuthorAvatar
+                        v-if="horizontal && video.author"
+                        :author="video.author"
+                        :is-live="video.liveStatus === 1"
+                      />
+                      <VideoCardAuthorName
+                        :author="video.author"
+                      />
+                    </span>
+                  </div>
+
+                  <div flex="~ items-center gap-1 wrap">
+                    <!-- View & Danmaku Count -->
+                    <div
+                      text="$bew-text-2"
+                      rounded="$bew-radius"
+                      inline-block
+                      :class="metaFontSizeClass"
+                    >
+                      <span v-if="video.view || video.viewStr">
+                        {{ video.view ? $t('common.view', { count: numFormatter(video.view) }, video.view) : `${numFormatter(video.viewStr || '0')}${$t('common.viewWithoutNum')}` }}
+                      </span>
+                      <template v-if="video.danmaku || video.danmakuStr">
+                        <span text-xs font-light mx-4px>•</span>
+                        <span>{{ video.danmaku ? $t('common.danmaku', { count: numFormatter(video.danmaku) }, video.danmaku) : `${numFormatter(video.danmakuStr || '0')}${$t('common.danmakuWithoutNum')}` }}</span>
+                      </template>
+                      <br>
+                    </div>
+                  </div>
+                  <div
+                    mt-2
+                    flex="~ gap-1 wrap"
+                    :class="metaFontSizeClass"
+                  >
+                    <!-- Tag -->
+                    <span
+                      v-if="video.tag"
+                      text="$bew-theme-color" lh-6 p="x-2" rounded="$bew-radius" bg="$bew-theme-color-20"
+                    >
+                      {{ video.tag }}
+                    </span>
+                    <span
+                      v-for="extraTag in highlightTags"
+                      :key="`highlight-${extraTag}`"
+                      text="$bew-theme-color"
+                      lh-6
+                      p="x-2"
+                      rounded="$bew-radius"
+                      bg="$bew-theme-color-20"
+                    >
+                      {{ extraTag }}
+                    </span>
+                    <span
+                      v-if="video.publishedTimestamp || video.capsuleText"
+                      bg="$bew-fill-1" p="x-2" rounded="$bew-radius" text="$bew-text-3" lh-6
+                      mr-1
+                    >
+                      {{ video.publishedTimestamp ? calcTimeSince(video.publishedTimestamp * 1000) : video.capsuleText?.trim() }}
+                    </span>
+                    <!-- Video type -->
+                    <span text="$bew-text-2" grid="~ place-items-center">
+                      <div v-if="video.type === 'vertical'" i-mingcute:cellphone-2-line />
+                      <div v-else-if="video.type === 'bangumi'" i-mingcute:movie-line />
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div
-                mt-2
-                flex="~ gap-1 wrap"
-                :class="metaFontSizeClass"
-              >
-                <!-- Tag -->
-                <span
-                  v-if="video.tag"
-                  text="$bew-theme-color" lh-6 p="x-2" rounded="$bew-radius" bg="$bew-theme-color-20"
-                >
-                  {{ video.tag }}
-                </span>
-                <span
-                  v-for="extraTag in highlightTags"
-                  :key="`highlight-${extraTag}`"
-                  text="$bew-theme-color"
-                  lh-6
-                  p="x-2"
-                  rounded="$bew-radius"
-                  bg="$bew-theme-color-20"
-                >
-                  {{ extraTag }}
-                </span>
-                <span
-                  v-if="video.publishedTimestamp || video.capsuleText"
-                  bg="$bew-fill-1" p="x-2" rounded="$bew-radius" text="$bew-text-3" lh-6
-                  mr-1
-                >
-                  {{ video.publishedTimestamp ? calcTimeSince(video.publishedTimestamp * 1000) : video.capsuleText?.trim() }}
-                </span>
-                <!-- Video type -->
-                <span text="$bew-text-2" grid="~ place-items-center">
-                  <div v-if="video.type === 'vertical'" i-mingcute:cellphone-2-line />
-                  <div v-else-if="video.type === 'bangumi'" i-mingcute:movie-line />
-                </span>
               </div>
             </div>
           </div>
