@@ -622,11 +622,6 @@ provide('getVideoType', () => props.type!)
             flex="~"
           >
             <!-- Author Avatar -->
-            <VideoCardAuthorAvatar
-              v-if="!horizontal && video.author"
-              :author="video.author"
-              :is-live="video.liveStatus === 1"
-            />
             <div class="group/desc" flex="~ col" w="full" align="items-start">
               <div flex="~ gap-1 justify-between items-start" w="full" pos="relative">
                 <h3
@@ -669,7 +664,7 @@ provide('getVideoType', () => props.type!)
                   flex="inline items-center"
                 >
                   <VideoCardAuthorAvatar
-                    v-if="horizontal && video.author"
+                    v-if="video.author"
                     :author="video.author"
                     :is-live="video.liveStatus === 1"
                   />
