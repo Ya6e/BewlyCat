@@ -445,7 +445,9 @@ provide('getVideoType', () => props.type!)
 .video-card-container {
   /* 使用 content-visibility 由父组件 VideoCardGrid 统一控制 */
   /* 这里只设置 contain 限制重排范围 */
-  contain: layout size style;
+  /* 注意：移除了 size - 它与 Grid 布局的 align-items: stretch 冲突，
+     会在 100% 缩放下导致布局抖动（Layout Thrashing） */
+  contain: layout style;
   min-width: 0;
 
   /* 防止字体加载导致的layout shift */

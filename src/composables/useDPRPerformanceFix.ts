@@ -39,39 +39,14 @@ export function useDPRPerformanceFix() {
     style.id = 'bewly-dpr-perf-fix'
 
     if (isDPR1.value) {
-      // DPR=1.0 时的激进优化
+      // DPR=1.0 时的优化 - 注意：不要使用 will-change 或 transform 创建过多合成层！
       style.textContent = `
-        /* DPR=1.0 性能优化 - 强制 GPU 合成 */
-        .video-card-container {
-          /* 使用微小的 3D 变换强制 GPU 层，但不影响视觉 */
-          transform: translateZ(0);
-          /* 禁用子像素抗锯齿，减少渲染开销 */
-          -webkit-font-smoothing: antialiased;
-          /* 提示浏览器此元素会变化 */
-          will-change: transform;
-          /* 隔离合成层 */
-          isolation: isolate;
-        }
-
-        /* 滚动时禁用所有过渡和阴影 */
+        /* DPR=1.0 性能优化 */
+        /* 滚动时禁用所有过渡和动画以减少重绘 */
         .video-card-container[data-scrolling="true"],
         .video-card-container[data-scrolling="true"] * {
           transition: none !important;
           animation: none !important;
-          box-shadow: none !important;
-        }
-
-        /* 优化滚动容器 */
-        [data-overlayscrollbars-viewport],
-        .os-viewport {
-          transform: translateZ(0);
-          will-change: scroll-position;
-        }
-
-        /* 减少重绘区域 */
-        .video-card-cover,
-        .video-card-info {
-          contain: layout style paint;
         }
       `
     }
@@ -79,11 +54,6 @@ export function useDPRPerformanceFix() {
       // DPR=1.25 时的轻度优化
       style.textContent = `
         /* DPR=1.25 轻度优化 */
-        .video-card-container {
-          transform: translateZ(0);
-          will-change: auto;
-        }
-
         /* 滚动时禁用过渡 */
         .video-card-container[data-scrolling="true"] {
           transition: none !important;

@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
     overflow-hidden
     cursor-pointer
     group-hover:z-2
-    style="aspect-ratio: 16 / 9; contain: layout size style; container-type: inline-size;"
+    style="aspect-ratio: 16 / 9; contain: layout style; container-type: inline-size;"
   >
     <!-- Skeleton mode -->
     <div

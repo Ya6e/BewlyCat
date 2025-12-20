@@ -144,8 +144,15 @@ const mainAppRef = ref<HTMLElement>() as Ref<HTMLElement>
 const scrollbarRef = ref()
 const nativeScrollRef = ref<HTMLElement>()
 // 通过 URL 参数启用原生滚动模式以测试性能
+// 或者在 DPR=1.0 时自动启用原生滚动（绕过 OverlayScrollbars 的性能问题）
 const useNativeScroll = computed(() => {
-  return new URLSearchParams(window.location.search).has('bewly-native-scroll')
+  // URL 参数强制启用
+  if (new URLSearchParams(window.location.search).has('bewly-native-scroll'))
+    return true
+  // DPR=1.0 时自动启用（此时 OverlayScrollbars 有严重性能问题）
+  if (isDPR1.value)
+    return true
+  return false
 })
 const handlePageRefresh = ref<() => void>()
 const handleReachBottom = ref<() => void>()

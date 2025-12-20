@@ -113,7 +113,7 @@ watch(() => props.src, (newSrc) => {
     w-full max-w-full align-middle
     rounded="$bew-radius"
     bg="$bew-skeleton"
-    style="aspect-ratio: 16 / 9; display: block; overflow: hidden; contain: layout size style;"
+    style="aspect-ratio: 16 / 9; display: block; overflow: hidden; contain: layout style;"
   >
     <!-- 骨架屏 - 图片未可见时显示（仅当 showSkeleton 为 true 时） -->
     <div
@@ -148,7 +148,7 @@ watch(() => props.src, (newSrc) => {
 <style scoped>
 .image-transition {
   transition: opacity 0.5s ease-out;
-  will-change: opacity;
+  /* will-change: opacity 已移除 - 会为每个图片创建合成层，导致 GPU 显存占用过高 */
 }
 
 @keyframes pulse {

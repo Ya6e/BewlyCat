@@ -14,6 +14,16 @@ export interface Transformer {
   notrigger?: boolean
 }
 
+// 检测是否为低 DPR（可能有性能问题的环境）
+// 使用闭包缓存结果，避免重复计算
+let _isLowDPR: boolean | null = null
+function isLowDPREnvironment(): boolean {
+  if (_isLowDPR === null) {
+    _isLowDPR = window.devicePixelRatio <= 1.0
+  }
+  return _isLowDPR
+}
+
 /**
  * Covert transform to top and left style, if no chromium, use transform
  * @param trigger
@@ -22,6 +32,9 @@ export interface Transformer {
 export function createTransformer(trigger: Ref<MaybeElement>, transformer: Transformer) {
   const target = ref<MaybeElement>()
   const style = ref<CSSProperties>({})
+
+  // 记录是否已经计算过位置（低 DPR 环境只计算一次）
+  let hasCalculatedPosition = false
 
   watch(() => trigger.value, (newVal) => {
     if (transformer.notrigger && newVal) {
@@ -62,6 +75,7 @@ export function createTransformer(trigger: Ref<MaybeElement>, transformer: Trans
       const el = unrefElement(target.value)
       const triggerEl = unrefElement(trigger)
       if (el && triggerEl) {
+        // 直接调用 getBoundingClientRect，缓存策略移除（因为问题不在这里）
         const targetRect = el.getBoundingClientRect()
         const triggerRect = triggerEl.getBoundingClientRect()
 
@@ -137,33 +151,54 @@ export function createTransformer(trigger: Ref<MaybeElement>, transformer: Trans
     return Object.keys(s).map(key => `${key}:${s[key]}`).join(';')
   }
 
-  // v-show
-  const targetVisibility = useElementVisibility(target)
+  function applyStyleOnce() {
+    const element = unrefElement(target)
+    if (element) {
+      update()
+      const currentStyle = element.getAttribute('style')
+      element.setAttribute('style', generateStyle(currentStyle))
+      hasCalculatedPosition = true
+    }
+  }
 
-  // fix keleus#135
-  // 还原为 whenever，仅在显示时计算位置
-  whenever(targetVisibility, () => {
-    try {
-      const targetElement = unrefElement(target)
-      if (targetElement) {
-        // 使用 requestAnimationFrame 和 setTimeout 确保 DOM 完全稳定后再计算位置
-        // 这样可以避免在动画过程中计算位置导致的错误
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            const element = unrefElement(target)
-            if (element) {
-              update()
-              const style = element.getAttribute('style')
-              element.setAttribute('style', generateStyle(style))
-            }
-          }, 0)
+  // 低 DPR 环境：完全跳过 useElementVisibility，只在 target 首次设置时计算一次位置
+  if (isLowDPREnvironment()) {
+    // 监听 target 变化，只在首次有值时计算位置
+    watch(target, (newTarget) => {
+      if (newTarget && !hasCalculatedPosition) {
+        // 使用 nextTick 确保 DOM 稳定
+        nextTick(() => {
+          requestAnimationFrame(() => {
+            applyStyleOnce()
+          })
         })
       }
-    }
-    catch (e) {
-      console.warn('Failed to update style on visibility change:', e)
-    }
-  }, { flush: 'pre' })
+    }, { immediate: true })
+  }
+  else {
+    // 正常 DPR 环境：使用 useElementVisibility 实现动态位置更新
+    const targetVisibility = useElementVisibility(target)
+
+    // fix keleus#135
+    // 还原为 whenever，仅在显示时计算位置
+    whenever(targetVisibility, () => {
+      try {
+        const targetElement = unrefElement(target)
+        if (targetElement) {
+          // 使用 requestAnimationFrame 和 setTimeout 确保 DOM 完全稳定后再计算位置
+          // 这样可以避免在动画过程中计算位置导致的错误
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              applyStyleOnce()
+            }, 0)
+          })
+        }
+      }
+      catch (e) {
+        console.warn('Failed to update style on visibility change:', e)
+      }
+    }, { flush: 'pre' })
+  }
 
   return target
 }
