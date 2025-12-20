@@ -131,6 +131,11 @@ const pages = {
 }
 const mainAppRef = ref<HTMLElement>() as Ref<HTMLElement>
 const scrollbarRef = ref()
+const nativeScrollRef = ref<HTMLElement>()
+// 通过 URL 参数启用原生滚动模式以测试性能
+const useNativeScroll = computed(() => {
+  return new URLSearchParams(window.location.search).has('bewly-native-scroll')
+})
 const handlePageRefresh = ref<() => void>()
 const handleReachBottom = ref<() => void>()
 const handleUndoRefresh = ref<() => void>()
@@ -591,6 +596,55 @@ function handleOsScroll() {
   })
 }
 
+// 原生滚动处理函数（用于性能测试模式）
+function handleNativeScroll() {
+  if (rafId !== null)
+    return
+
+  perfDiagnostics.onScrollStart()
+
+  rafId = requestAnimationFrame(() => {
+    const container = nativeScrollRef.value
+    if (!container) {
+      rafId = null
+      return
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    emitter.emit(OVERLAY_SCROLL_BAR_SCROLL, scrollTop)
+
+    if (scrollTop === 0) {
+      reachTop.value = true
+    }
+    else {
+      reachTop.value = false
+    }
+
+    const threshold = Math.min(200, clientHeight * 0.2)
+    if (clientHeight + scrollTop >= scrollHeight - threshold) {
+      handleThrottledReachBottom()
+    }
+
+    if (scrollEndTimer) {
+      clearTimeout(scrollEndTimer)
+    }
+
+    const cachedScrollTop = scrollTop
+    const cachedScrollHeight = scrollHeight
+    const cachedClientHeight = clientHeight
+
+    scrollEndTimer = setTimeout(() => {
+      const threshold = Math.min(200, cachedClientHeight * 0.2)
+      if (cachedClientHeight + cachedScrollTop >= cachedScrollHeight - threshold * 1.5) {
+        handleReachBottom.value?.()
+      }
+      perfDiagnostics.onScrollEnd()
+    }, 150)
+
+    rafId = null
+  })
+}
+
 function openIframeDrawer(url: string) {
   const isSameOrigin = (origin: URL, destination: URL) =>
     origin.protocol === destination.protocol && origin.host === destination.host && origin.port === destination.port
@@ -887,7 +941,28 @@ if (settings.value.cleanUrlArgument) {
     >
       <Transition name="fade">
         <template v-if="showBewlyPage">
+          <!-- 原生滚动模式：通过 ?bewly-native-scroll 参数启用 -->
+          <div
+            v-if="useNativeScroll"
+            ref="nativeScrollRef"
+            h-inherit
+            overflow-y-auto overflow-x-hidden
+            @scroll="handleNativeScroll"
+          >
+            <main m-auto max-w="$bew-page-max-width">
+              <div
+                p="t-[calc(var(--bew-top-bar-height)+10px)]" m-auto
+                w="lg:[calc(100%-200px)] [calc(100%-150px)]"
+              >
+                <Transition name="page-fade">
+                  <Component :is="pages[activatedPage]" :key="activatedPage" />
+                </Transition>
+              </div>
+            </main>
+          </div>
+          <!-- OverlayScrollbars 模式 -->
           <OverlayScrollbarsComponent
+            v-else
             ref="scrollbarRef" element="div" h-inherit defer
             :options="{
               overflow: {
