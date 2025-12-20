@@ -898,7 +898,10 @@ if (settings.value.cleanUrlArgument) {
                 autoHideDelay: 400,
               },
               update: {
-                debounce: [150, 300],
+                // 增加 debounce 延迟，减少滚动时的 DOM 查询
+                debounce: [200, 500],
+                // 忽略某些 DOM 变化，降低 getBoundingClientRect 调用频率
+                ignoreMutation: () => true,
               },
             }"
             @os-scroll="handleOsScroll"
