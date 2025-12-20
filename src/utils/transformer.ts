@@ -48,12 +48,6 @@ export function createTransformer(trigger: Ref<MaybeElement>, transformer: Trans
   })
 
   function update() {
-    // 调试代码：找出谁在调用 update
-    if (isLowDPREnvironment()) {
-      // eslint-disable-next-line no-console
-      console.trace('Transformer update called', target.value)
-    }
-
     // 添加安全检查
     if (!target.value && !unrefElement(trigger)) {
       return
@@ -175,10 +169,6 @@ export function createTransformer(trigger: Ref<MaybeElement>, transformer: Trans
         // 使用 nextTick 确保 DOM 稳定
         nextTick(() => {
           requestAnimationFrame(() => {
-            if (isLowDPREnvironment()) {
-              // eslint-disable-next-line no-console
-              console.log('Transformer applying style once for', newTarget)
-            }
             applyStyleOnce()
           })
         })

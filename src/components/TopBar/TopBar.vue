@@ -351,7 +351,7 @@ const VideoPageTopBarConfigEnum = VideoPageTopBarConfig
     />
     <Transition name="top-bar">
       <header
-        v-if="topBarStore.showTopBar"
+        v-show="topBarStore.showTopBar"
         ref="headerTarget"
         class="top-bar"
         w="full" transition="all 300 ease-in-out"

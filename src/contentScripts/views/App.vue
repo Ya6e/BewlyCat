@@ -935,7 +935,7 @@ if (settings.value.cleanUrlArgument) {
 
     <!-- TopBar -->
     <div
-      v-if="showTopBar"
+      v-show="showTopBar"
       m-auto max-w="$bew-page-max-width"
       :style="{
         opacity: hideUIForIframePhotoViewer ? 0 : 1,
