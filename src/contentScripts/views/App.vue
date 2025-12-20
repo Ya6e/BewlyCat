@@ -7,6 +7,7 @@ import UpdateLogNotifier from '~/components/UpdateLogNotifier.vue'
 import type { BewlyAppProvider } from '~/composables/useAppProvider'
 import { DrawerType, UndoForwardState } from '~/composables/useAppProvider'
 import { useDark } from '~/composables/useDark'
+import { useDPRPerformanceFix } from '~/composables/useDPRPerformanceFix'
 import { useVideoCardShadowStyle } from '~/composables/useVideoCardShadowStyle'
 import { BEWLY_MOUNTED, DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL, IFRAME_PAGE_SWITCH_BEWLY, IFRAME_PAGE_SWITCH_BILI, OVERLAY_SCROLL_BAR_SCROLL } from '~/constants/globalEvents'
 import { HomeSubPage } from '~/contentScripts/views/Home/types'
@@ -34,6 +35,16 @@ const topBarStore = useTopBarStore()
 
 // Global video card shadow styles - computed once for all cards
 const { shadowStyleVars } = useVideoCardShadowStyle()
+
+// DPR=1.0 性能优化 - 检测低 DPR 并注入 GPU 合成 CSS
+const { isDPR1, isLowDPR, currentDPR } = useDPRPerformanceFix()
+
+// 在性能诊断中报告 DPR 优化状态
+if (new URLSearchParams(window.location.search).has('bewly-perf')) {
+  watch(() => currentDPR.value, (dpr) => {
+    console.log(`[BewlyPerf] DPR 优化状态: DPR=${dpr.toFixed(2)}, isDPR1=${isDPR1.value}, isLowDPR=${isLowDPR.value}`)
+  }, { immediate: true })
+}
 
 // Update log notifier state
 const showUpdateLogNotifier = ref(false)
