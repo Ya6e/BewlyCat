@@ -645,4 +645,24 @@ function getUniqueKey(item: T, index: number): string | number {
   width: 100%;
   height: 1px;
 }
+
+/**
+ * 性能优化：滚动时禁用所有过渡动画
+ * 通过父容器的 pointer-events: none 自动触发
+ */
+:deep(.video-card-container) {
+  /* 默认状态 */
+  will-change: auto;
+}
+
+/* 当父容器 pointer-events 为 none 时（滚动中），禁用动画 */
+[style*="pointer-events: none"] :deep(.video-card-container) {
+  transition: none !important;
+  animation: none !important;
+
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
 </style>

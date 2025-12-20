@@ -893,6 +893,13 @@ if (settings.value.cleanUrlArgument) {
               overflow: {
                 x: 'hidden',
               },
+              scrollbars: {
+                autoHide: 'scroll',
+                autoHideDelay: 400,
+              },
+              update: {
+                debounce: [150, 300],
+              },
             }"
             @os-scroll="handleOsScroll"
           >

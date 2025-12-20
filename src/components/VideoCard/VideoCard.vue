@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useBewlyApp } from '~/composables/useAppProvider'
 import { settings } from '~/logic'
@@ -321,12 +321,16 @@ function handleImageLoaded() {
   imageLoaded.value = true
 }
 
-// Expose moreBtnRef from child component
-watchEffect(() => {
-  if (infoComponentRef.value?.moreBtnRef) {
-    logic.moreBtnRef.value = infoComponentRef.value.moreBtnRef
-  }
-})
+// Expose moreBtnRef from child component - use watch instead of watchEffect for better performance
+watch(
+  () => infoComponentRef.value?.moreBtnRef,
+  (newRef) => {
+    if (newRef) {
+      logic.moreBtnRef.value = newRef
+    }
+  },
+  { immediate: true },
+)
 
 provide('getVideoType', () => props.type!)
 </script>
