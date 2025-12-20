@@ -283,11 +283,98 @@ class PerformanceDiagnostics {
 // 单例实例
 export const perfDiagnostics = new PerformanceDiagnostics()
 
+// 布局抖动检测器
+let layoutReadCount = 0
+let lastLayoutReadTime = 0
+const LAYOUT_THRASHING_THRESHOLD = 10 // 100ms 内超过10次读取视为抖动
+const LAYOUT_THRASHING_WINDOW = 100
+
+/**
+ * 跟踪 DOM 布局读取，检测 layout thrashing
+ */
+export function trackLayoutRead(source: string): void {
+  const now = performance.now()
+  if (now - lastLayoutReadTime > LAYOUT_THRASHING_WINDOW) {
+    layoutReadCount = 0
+  }
+  layoutReadCount++
+  lastLayoutReadTime = now
+
+  if (layoutReadCount > LAYOUT_THRASHING_THRESHOLD) {
+    console.warn(`[BewlyPerf] ⚠️ Layout thrashing 检测! ${layoutReadCount} 次布局读取在 ${LAYOUT_THRASHING_WINDOW}ms 内 (来源: ${source})`)
+  }
+}
+
+/**
+ * 跟踪 Vue computed 计算
+ */
+let computedCallCounts: Record<string, number> = {}
+let lastComputedReportTime = 0
+
+export function trackComputed(name: string): void {
+  // eslint-disable-next-line dot-notation
+  if (!perfDiagnostics['enabled'])
+    return
+
+  computedCallCounts[name] = (computedCallCounts[name] || 0) + 1
+
+  const now = performance.now()
+  if (now - lastComputedReportTime > 1000) {
+    const total = Object.values(computedCallCounts).reduce((a, b) => a + b, 0)
+    if (total > 100) {
+      console.warn(`[BewlyPerf] ⚠️ 过多的 computed 计算! 总计: ${total}`)
+      const sorted = Object.entries(computedCallCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+      console.log('[BewlyPerf] Top 5 computed 调用:', sorted)
+    }
+    computedCallCounts = {}
+    lastComputedReportTime = now
+  }
+}
+
 // 在开发模式或通过 URL 参数启用
 if (typeof window !== 'undefined') {
   const urlParams = new URLSearchParams(window.location.search)
   if (urlParams.has('bewly-perf') || urlParams.has('debug')) {
     perfDiagnostics.enable()
+
+    // 检测强制同步布局
+    const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function () {
+      trackLayoutRead('getBoundingClientRect')
+      return originalGetBoundingClientRect.call(this)
+    }
+
+    // 检测常见的布局读取属性
+    const layoutProps = [
+      'offsetWidth',
+      'offsetHeight',
+      'offsetTop',
+      'offsetLeft',
+      'clientWidth',
+      'clientHeight',
+      'clientTop',
+      'clientLeft',
+      'scrollWidth',
+      'scrollHeight',
+      'scrollTop',
+      'scrollLeft',
+    ] as const
+
+    layoutProps.forEach((prop) => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, prop)
+      if (descriptor && descriptor.get) {
+        const originalGetter = descriptor.get
+        Object.defineProperty(HTMLElement.prototype, prop, {
+          ...descriptor,
+          get() {
+            trackLayoutRead(prop)
+            return originalGetter.call(this)
+          },
+        })
+      }
+    })
   }
 
   // 暴露到全局，方便在控制台手动启用

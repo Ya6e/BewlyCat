@@ -620,11 +620,19 @@ function getUniqueKey(item: T, index: number): string | number {
   align-items: stretch; /* 同行卡片拉伸到统一高度 */
 }
 
-/* 优化性能：VideoCard 使用 contain 属性并固定高度 */
+/**
+ * 性能优化：使用 content-visibility 让浏览器跳过屏幕外卡片的渲染
+ * contain-intrinsic-size 提供占位尺寸以保持滚动条稳定
+ */
 :deep(.video-card-container) {
   contain: layout;
   /* 关键：防止 grid 项目内容撑开超出容器 */
   min-width: 0;
+
+  /* 启用 content-visibility 优化 - 屏幕外的卡片将跳过渲染 */
+  content-visibility: auto;
+  /* 提供占位尺寸（宽度自适应，高度约 280px） */
+  contain-intrinsic-size: auto 280px;
 }
 
 /* 非 adaptive 布局也需要优化 */
