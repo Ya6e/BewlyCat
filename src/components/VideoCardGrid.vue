@@ -242,6 +242,7 @@ function checkShouldPreload() {
       return
 
     // 批量读取 DOM 属性
+    console.warn('VideoCardGrid fallback getBoundingClientRect triggered')
     const rect = container.getBoundingClientRect()
     const viewportHeight = window.innerHeight
 

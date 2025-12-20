@@ -1,4 +1,6 @@
-import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
+
+import { useGlobalScrollState } from '~/composables/useGlobalScrollState'
 
 /**
  * 检测 DPR=1 的性能问题并应用优化
@@ -12,7 +14,7 @@ import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
  * 解决方案：
  * 1. 检测 DPR=1.0 的情况
  * 2. 注入 CSS 规则强制 GPU 层合成
- * 3. 对滚动容器应用 `will-change` 和 `transform` 优化
+ * 3. 对滚动容器应用 body class 优化
  */
 export function useDPRPerformanceFix() {
   const currentDPR = ref(window.devicePixelRatio)
@@ -39,12 +41,12 @@ export function useDPRPerformanceFix() {
     style.id = 'bewly-dpr-perf-fix'
 
     if (isDPR1.value) {
-      // DPR=1.0 时的优化 - 注意：不要使用 will-change 或 transform 创建过多合成层！
+      // DPR=1.0 时的优化 - 使用 body class 选择器，避免个别元素属性变化引起的重排
       style.textContent = `
         /* DPR=1.0 性能优化 */
         /* 滚动时禁用所有过渡和动画以减少重绘 */
-        .video-card-container[data-scrolling="true"],
-        .video-card-container[data-scrolling="true"] * {
+        body.bewly-scrolling .video-card-container,
+        body.bewly-scrolling .video-card-container * {
           transition: none !important;
           animation: none !important;
         }
@@ -55,7 +57,7 @@ export function useDPRPerformanceFix() {
       style.textContent = `
         /* DPR=1.25 轻度优化 */
         /* 滚动时禁用过渡 */
-        .video-card-container[data-scrolling="true"] {
+        body.bewly-scrolling .video-card-container {
           transition: none !important;
         }
       `
@@ -73,6 +75,7 @@ export function useDPRPerformanceFix() {
       styleElement.value.remove()
       styleElement.value = null
     }
+    document.body.classList.remove('bewly-scrolling')
   }
 
   // 监听 DPR 变化（用户改变缩放时）
@@ -116,53 +119,25 @@ export function useDPRPerformanceFix() {
 
 /**
  * 应用于滚动容器的性能优化 hook
- * 在滚动时标记所有卡片为 "scrolling" 状态
+ * 在滚动时标记 body 为 "bewly-scrolling" 状态
+ * 相比于标记每个卡片，这大大减少了 DOM 操作次数 (O(N) -> O(1))
  */
-export function useScrollingOptimization(containerRef: () => HTMLElement | null | undefined) {
-  let scrollTimeout: number | null = null
-  let isScrolling = false
+export function useScrollingOptimization() {
+  const { isScrolling } = useGlobalScrollState()
 
-  function markScrolling(state: boolean) {
-    const container = containerRef()
-    if (!container)
-      return
-
-    const cards = container.querySelectorAll('.video-card-container')
-    cards.forEach((card) => {
-      if (state) {
-        card.setAttribute('data-scrolling', 'true')
-      }
-      else {
-        card.removeAttribute('data-scrolling')
-      }
-    })
-    isScrolling = state
-  }
-
-  function handleScroll() {
-    if (!isScrolling) {
-      markScrolling(true)
+  watch(isScrolling, (scrolling) => {
+    if (scrolling) {
+      document.body.classList.add('bewly-scrolling')
     }
-
-    if (scrollTimeout) {
-      clearTimeout(scrollTimeout)
+    else {
+      document.body.classList.remove('bewly-scrolling')
     }
+  })
 
-    scrollTimeout = window.setTimeout(() => {
-      markScrolling(false)
-      scrollTimeout = null
-    }, 150)
-  }
-
-  function cleanup() {
-    if (scrollTimeout) {
-      clearTimeout(scrollTimeout)
-    }
-    markScrolling(false)
-  }
+  // 保持空函数以兼容现有代码调用，以后可以移除
+  function markScrolling(_: boolean) {}
 
   return {
-    handleScroll,
-    cleanup,
+    markScrolling,
   }
 }

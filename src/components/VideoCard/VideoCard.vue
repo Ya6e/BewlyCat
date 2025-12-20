@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 
 import { useBewlyApp } from '~/composables/useAppProvider'
-import { useGlobalScrollState } from '~/composables/useGlobalScrollState'
 import { settings } from '~/logic'
 import type { VideoCardLayoutSetting } from '~/logic/storage'
 import { calcCurrentTime, numFormatter } from '~/utils/dataFormatter'
@@ -34,9 +33,6 @@ const layout = computed((): 'modern' | 'old' => {
   const layoutSetting = settings.value.videoCardLayout as VideoCardLayoutSetting | undefined
   return layoutSetting === 'old' ? 'old' : 'modern'
 })
-
-// 获取全局滚动状态，用于在滚动时禁用动画提升性能
-const { isScrolling } = useGlobalScrollState()
 
 // 数据现在在转换阶段已经完成 HTML 解码，直接使用 props
 const logic = useVideoCardLogic(props)
@@ -348,7 +344,6 @@ provide('getVideoType', () => props.type!)
     :ring="skeleton ? '' : 'hover:8 hover:$bew-fill-2 active:8 active:$bew-fill-3'"
     :bg="skeleton ? '' : 'hover:$bew-fill-2 active:$bew-fill-3'"
     :class="layout === 'modern' ? 'mb-3' : 'mb-4'"
-    :data-scrolling="isScrolling ? 'true' : undefined"
   >
     <div
       class="video-card group"
