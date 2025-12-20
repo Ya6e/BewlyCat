@@ -9,6 +9,7 @@ import type { GridLayoutType } from '~/logic'
 import { settings } from '~/logic'
 import { isHomePage } from '~/utils/main'
 import emitter from '~/utils/mitt'
+import { perfDiagnostics } from '~/utils/performanceDiagnostics'
 
 /**
  * 统一的 VideoCard Grid 组件
@@ -302,12 +303,14 @@ watch(() => props.loading, (newLoading, oldLoading) => {
 })
 
 // 监听 items 变化后检查（处理初次加载不足的情况）
-watch(() => props.items.length, () => {
+watch(() => props.items.length, (newLength) => {
   // items 更新通常意味着加载已完成或数据发生变化，允许下一次 loadMore
   loadMoreRequested.value = false
 
   nextTick(() => {
     checkShouldPreload()
+    // 更新性能诊断的 Grid 信息
+    perfDiagnostics.updateGridInfo(newLength, columnCount.value)
   })
 })
 
@@ -321,6 +324,8 @@ onMounted(() => {
   // 初始检查
   nextTick(() => {
     checkShouldPreload()
+    // 更新性能诊断的 Grid 信息
+    perfDiagnostics.updateGridInfo(props.items.length, columnCount.value)
   })
 })
 

@@ -18,6 +18,7 @@ import { useSettingsStore } from '~/stores/settingsStore'
 import { useTopBarStore } from '~/stores/topBarStore'
 import { isHomePage, isInIframe, isNotificationPage, isSearchResultsPage, isVideoOrBangumiPage, openLinkToNewTab, queryDomUntilFound, scrollToTop } from '~/utils/main'
 import emitter from '~/utils/mitt'
+import { perfDiagnostics } from '~/utils/performanceDiagnostics'
 import { getChangelogUrl, getExtensionVersion, shouldShowUpdateLog } from '~/utils/updateLog'
 
 import { setupNecessarySettingsWatchers } from './necessarySettingsWatchers'
@@ -526,6 +527,9 @@ function handleOsScroll() {
   if (rafId !== null)
     return
 
+  // 标记滚动开始（用于性能诊断）
+  perfDiagnostics.onScrollStart()
+
   // 使用 RAF 将所有 DOM 读取合并到下一帧
   rafId = requestAnimationFrame(() => {
     const osInstance = scrollbarRef.value?.osInstance()
@@ -578,6 +582,9 @@ function handleOsScroll() {
       if (cachedClientHeight + cachedScrollTop >= cachedScrollHeight - threshold * 1.5) {
         handleReachBottom.value?.()
       }
+
+      // 标记滚动结束（用于性能诊断）
+      perfDiagnostics.onScrollEnd()
     }, 150)
 
     rafId = null
